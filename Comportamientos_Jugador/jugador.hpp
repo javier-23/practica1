@@ -15,12 +15,14 @@ class ComportamientoJugador : public Comportamiento{
     ComportamientoJugador(const ComportamientoJugador & comport) : Comportamiento(comport){}
     ~ComportamientoJugador(){}
 
-    Action think(Sensores sensores);
-    int interact(Action accion, int valor);
+    Action think(Sensores sensores);//Describe el comportamiento del agente
+    int interact(Action accion, int valor); //Como interacciona este agente con otros (irrelevante para esta práctica)
 
   private:
   
   // Declarar aquí las variables de estado
+  Action last_action;
+  Orientacion brujula;
 
 };
 

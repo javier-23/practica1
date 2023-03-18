@@ -4,4 +4,5 @@ lib
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
+*.json
 .DS_Store
