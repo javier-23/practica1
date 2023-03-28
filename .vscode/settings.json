@@ -1,6 +1,12 @@
 {
     "files.associations": {
+<<<<<<< HEAD
         "iosfwd": "cpp"
     },
     "cmake.configureOnOpen": false
+=======
+        "iosfwd": "cpp",
+        "ostream": "cpp"
+    }
+>>>>>>> upstream/main
 }
