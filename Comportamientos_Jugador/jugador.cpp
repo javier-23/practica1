@@ -87,6 +87,15 @@ Action ComportamientoJugador::think(Sensores sensores){
 		cout << sensores.terreno[i];
 	cout << endl;
 
+	/*
+	cout << mapaCiego.size() << endl;
+	for(int i=0; i<mapaCiego.size(); i++){
+		for(int j=0; j<mapaCiego.size(); j++){
+			cout << mapaCiego[i][j] << " ";
+		}
+		cout << endl;
+	}*/
+
 	cout << "Superficie: ";
 	for (int i=0; i<sensores.superficie.size(); i++)
 		cout << sensores.superficie[i];
@@ -97,170 +106,102 @@ Action ComportamientoJugador::think(Sensores sensores){
 	cout << "Vida: " << sensores.vida << endl;
 	cout << endl;
 
+//Mover a la casilla que me interesa
+if(!prioridad_accion){ //Si no he hecho anteriormente un movimiento con prioridad
+	for(int i=1; i<sensores.terreno.size() && !encontrada_casilla; i++){
+		if( sensores.terreno[i] == 'G' || sensores.terreno[i] == 'X' || sensores.terreno[i] == 'K' || sensores.terreno[i] == 'D'){
+			prioridad_accion =true;
+			if(i==1 || i ==4 || i==5 || i==9 || i==10 || i==11)
+				accion = actTURN_SL;
+			else if(i==2 || i ==6 || i==12)
+				accion = actFORWARD;
+			else
+				accion = actTURN_SR;
+			encontrada_casilla=true;
+		}
+		else
+			prioridad_accion = false;
+	}	
+	encontrada_casilla=false;
+}else{
+	prioridad_accion=false;
+}
 
-	if (sensores.terreno[0]=='G' and !bien_situado){ 
+	if ( (sensores.terreno[0]=='G' and !bien_situado) || sensores.nivel == 0){ 
 		current_state.fil = sensores.posF;
 		current_state.col= sensores.posC;
 		current_state.brujula = sensores.sentido;
 		bien_situado = true;
+		if(sensores.nivel !=0){ //Pintar lo descubierto previamente a caer en la casilla de posicionamiento
+			copiarMatriz(mapaCiego,mapaResultado);
+		}
+	}
+
+	if(sensores.terreno[0] == 'D'){
+		tieneZapatillas=true;
+		prioridad_accion=false;
+	}
+
+	if(sensores.terreno[0] == 'K'){
+		tieneBikini=true;
+		prioridad_accion=false;
+	}
+
+	if(sensores.terreno[0] == 'X'){
+		if(sensores.bateria<4600){
+			accion = actIDLE;
+			prioridad_accion=true;
+		}
+		if(sensores.bateria==4600)
+			prioridad_accion=false;
+	}
+
+	if(!bien_situado){
+		PonerTerrenoEnMatriz(sensores.terreno, current_state, mapaCiego);
 	}
 
 	if(bien_situado){
-		mapaResultado[current_state.fil][current_state.col] = sensores.terreno[0];
-			switch (current_state.brujula)
-			{
-			case norte:
-				mapaResultado[current_state.fil-1][current_state.col-1]=sensores.terreno[1];
-				mapaResultado[current_state.fil-1][current_state.col]=sensores.terreno[2];
-				mapaResultado[current_state.fil-1][current_state.col+1]=sensores.terreno[3];
-				mapaResultado[current_state.fil-2][current_state.col-2]=sensores.terreno[4];
-				mapaResultado[current_state.fil-2][current_state.col-1]=sensores.terreno[5];
-				mapaResultado[current_state.fil-2][current_state.col]=sensores.terreno[6];
-				mapaResultado[current_state.fil-2][current_state.col+1]=sensores.terreno[7];
-				mapaResultado[current_state.fil-2][current_state.col+2]=sensores.terreno[8];
-				mapaResultado[current_state.fil-3][current_state.col-3]=sensores.terreno[9];
-				mapaResultado[current_state.fil-3][current_state.col-2]=sensores.terreno[10];
-				mapaResultado[current_state.fil-3][current_state.col-1]=sensores.terreno[11];
-				mapaResultado[current_state.fil-3][current_state.col]=sensores.terreno[12];
-				mapaResultado[current_state.fil-3][current_state.col+1]=sensores.terreno[13];
-				mapaResultado[current_state.fil-3][current_state.col+2]=sensores.terreno[14];
-				mapaResultado[current_state.fil-3][current_state.col+3]=sensores.terreno[15];
-				break;
-			case noreste:
-				mapaResultado[current_state.fil-1][current_state.col]=sensores.terreno[1];
-				mapaResultado[current_state.fil-1][current_state.col+1]=sensores.terreno[2];
-				mapaResultado[current_state.fil][current_state.col+1]=sensores.terreno[3];
-				mapaResultado[current_state.fil-2][current_state.col]=sensores.terreno[4];
-				mapaResultado[current_state.fil-2][current_state.col+1]=sensores.terreno[5];
-				mapaResultado[current_state.fil-2][current_state.col+2]=sensores.terreno[6];
-				mapaResultado[current_state.fil-1][current_state.col+2]=sensores.terreno[7];
-				mapaResultado[current_state.fil][current_state.col+2]=sensores.terreno[8];
-				mapaResultado[current_state.fil-3][current_state.col]=sensores.terreno[9];
-				mapaResultado[current_state.fil-3][current_state.col+1]=sensores.terreno[10];
-				mapaResultado[current_state.fil-3][current_state.col+2]=sensores.terreno[11];
-				mapaResultado[current_state.fil-3][current_state.col+3]=sensores.terreno[12];
-				mapaResultado[current_state.fil-2][current_state.col+3]=sensores.terreno[13];
-				mapaResultado[current_state.fil-1][current_state.col+3]=sensores.terreno[14];
-				mapaResultado[current_state.fil][current_state.col+3]=sensores.terreno[15];
-				break;
-			case este:
-				mapaResultado[current_state.fil-1][current_state.col+1]=sensores.terreno[1];
-				mapaResultado[current_state.fil][current_state.col+1]=sensores.terreno[2];
-				mapaResultado[current_state.fil+1][current_state.col+1]=sensores.terreno[3];
-				mapaResultado[current_state.fil-2][current_state.col+2]=sensores.terreno[4];
-				mapaResultado[current_state.fil-1][current_state.col+2]=sensores.terreno[5];
-				mapaResultado[current_state.fil][current_state.col+2]=sensores.terreno[6];
-				mapaResultado[current_state.fil+1][current_state.col+2]=sensores.terreno[7];
-				mapaResultado[current_state.fil+2][current_state.col+2]=sensores.terreno[8];
-				mapaResultado[current_state.fil-3][current_state.col+3]=sensores.terreno[9];
-				mapaResultado[current_state.fil-2][current_state.col+3]=sensores.terreno[10];
-				mapaResultado[current_state.fil-1][current_state.col+3]=sensores.terreno[11];
-				mapaResultado[current_state.fil][current_state.col+3]=sensores.terreno[12];
-				mapaResultado[current_state.fil+1][current_state.col+3]=sensores.terreno[13];
-				mapaResultado[current_state.fil+2][current_state.col+3]=sensores.terreno[14];
-				mapaResultado[current_state.fil+3][current_state.col+3]=sensores.terreno[15];
-				break;
-			case sureste:
-				mapaResultado[current_state.fil][current_state.col+1]=sensores.terreno[1];
-				mapaResultado[current_state.fil+1][current_state.col+1]=sensores.terreno[2];
-				mapaResultado[current_state.fil+1][current_state.col]=sensores.terreno[3];
-				mapaResultado[current_state.fil][current_state.col+2]=sensores.terreno[4];
-				mapaResultado[current_state.fil+1][current_state.col+2]=sensores.terreno[5];
-				mapaResultado[current_state.fil+2][current_state.col+2]=sensores.terreno[6];
-				mapaResultado[current_state.fil+2][current_state.col+1]=sensores.terreno[7];
-				mapaResultado[current_state.fil+2][current_state.col+2]=sensores.terreno[8];
-				mapaResultado[current_state.fil][current_state.col+3]=sensores.terreno[9];
-				mapaResultado[current_state.fil+1][current_state.col+3]=sensores.terreno[10];
-				mapaResultado[current_state.fil+2][current_state.col+3]=sensores.terreno[11];
-				mapaResultado[current_state.fil+3][current_state.col+3]=sensores.terreno[12];
-				mapaResultado[current_state.fil+3][current_state.col+2]=sensores.terreno[13];
-				mapaResultado[current_state.fil+3][current_state.col+1]=sensores.terreno[14];
-				mapaResultado[current_state.fil+3][current_state.col]=sensores.terreno[15];
-				break;
-			case sur:
-				mapaResultado[current_state.fil+1][current_state.col+1]=sensores.terreno[1];
-				mapaResultado[current_state.fil+1][current_state.col]=sensores.terreno[2];
-				mapaResultado[current_state.fil+1][current_state.col-1]=sensores.terreno[3];
-				mapaResultado[current_state.fil+2][current_state.col+2]=sensores.terreno[4];
-				mapaResultado[current_state.fil+2][current_state.col+1]=sensores.terreno[5];
-				mapaResultado[current_state.fil+2][current_state.col]=sensores.terreno[6];
-				mapaResultado[current_state.fil+2][current_state.col-1]=sensores.terreno[7];
-				mapaResultado[current_state.fil+2][current_state.col-2]=sensores.terreno[8];
-				mapaResultado[current_state.fil+3][current_state.col+3]=sensores.terreno[9];
-				mapaResultado[current_state.fil+3][current_state.col+2]=sensores.terreno[10];
-				mapaResultado[current_state.fil+3][current_state.col+1]=sensores.terreno[11];
-				mapaResultado[current_state.fil+3][current_state.col]=sensores.terreno[12];
-				mapaResultado[current_state.fil+3][current_state.col-1]=sensores.terreno[13];
-				mapaResultado[current_state.fil+3][current_state.col-2]=sensores.terreno[14];
-				mapaResultado[current_state.fil+3][current_state.col-3]=sensores.terreno[15];
-				break;
-			case suroeste:
-				mapaResultado[current_state.fil+1][current_state.col]=sensores.terreno[1];
-				mapaResultado[current_state.fil+1][current_state.col-1]=sensores.terreno[2];
-				mapaResultado[current_state.fil][current_state.col-1]=sensores.terreno[3];
-				mapaResultado[current_state.fil+2][current_state.col]=sensores.terreno[4];
-				mapaResultado[current_state.fil+2][current_state.col-1]=sensores.terreno[5];
-				mapaResultado[current_state.fil+2][current_state.col-2]=sensores.terreno[6];
-				mapaResultado[current_state.fil+1][current_state.col-2]=sensores.terreno[7];
-				mapaResultado[current_state.fil][current_state.col-2]=sensores.terreno[8];
-				mapaResultado[current_state.fil+3][current_state.col]=sensores.terreno[9];
-				mapaResultado[current_state.fil+3][current_state.col-1]=sensores.terreno[10];
-				mapaResultado[current_state.fil+3][current_state.col-2]=sensores.terreno[11];
-				mapaResultado[current_state.fil+3][current_state.col-2]=sensores.terreno[12];
-				mapaResultado[current_state.fil+2][current_state.col-3]=sensores.terreno[13];
-				mapaResultado[current_state.fil+1][current_state.col-3]=sensores.terreno[14];
-				mapaResultado[current_state.fil][current_state.col-3]=sensores.terreno[15];
-				break;
-			case oeste:
-				mapaResultado[current_state.fil+1][current_state.col-1]=sensores.terreno[1];
-				mapaResultado[current_state.fil][current_state.col-1]=sensores.terreno[2];
-				mapaResultado[current_state.fil-1][current_state.col-1]=sensores.terreno[3];
-				mapaResultado[current_state.fil+2][current_state.col-2]=sensores.terreno[4];
-				mapaResultado[current_state.fil+1][current_state.col-2]=sensores.terreno[5];
-				mapaResultado[current_state.fil][current_state.col-2]=sensores.terreno[6];
-				mapaResultado[current_state.fil-1][current_state.col-2]=sensores.terreno[7];
-				mapaResultado[current_state.fil-2][current_state.col-2]=sensores.terreno[8];
-				mapaResultado[current_state.fil+3][current_state.col-3]=sensores.terreno[9];
-				mapaResultado[current_state.fil+2][current_state.col-3]=sensores.terreno[10];
-				mapaResultado[current_state.fil+1][current_state.col-3]=sensores.terreno[11];
-				mapaResultado[current_state.fil][current_state.col-3]=sensores.terreno[12];
-				mapaResultado[current_state.fil-1][current_state.col-3]=sensores.terreno[13];
-				mapaResultado[current_state.fil-2][current_state.col-3]=sensores.terreno[14];
-				mapaResultado[current_state.fil-3][current_state.col-3]=sensores.terreno[15];
-				break;
-			case noroeste:
-				mapaResultado[current_state.fil][current_state.col-1]=sensores.terreno[1];
-				mapaResultado[current_state.fil-1][current_state.col-1]=sensores.terreno[2];
-				mapaResultado[current_state.fil-1][current_state.col]=sensores.terreno[3];
-				mapaResultado[current_state.fil][current_state.col-2]=sensores.terreno[4];
-				mapaResultado[current_state.fil-1][current_state.col-2]=sensores.terreno[5];
-				mapaResultado[current_state.fil-2][current_state.col-2]=sensores.terreno[6];
-				mapaResultado[current_state.fil-2][current_state.col-1]=sensores.terreno[7];
-				mapaResultado[current_state.fil-2][current_state.col]=sensores.terreno[8];
-				mapaResultado[current_state.fil][current_state.col-3]=sensores.terreno[9];
-				mapaResultado[current_state.fil-1][current_state.col-3]=sensores.terreno[10];
-				mapaResultado[current_state.fil-2][current_state.col-3]=sensores.terreno[11];
-				mapaResultado[current_state.fil-3][current_state.col-3]=sensores.terreno[12];
-				mapaResultado[current_state.fil-3][current_state.col-2]=sensores.terreno[13];
-				mapaResultado[current_state.fil-3][current_state.col-1]=sensores.terreno[14];
-				mapaResultado[current_state.fil-3][current_state.col]=sensores.terreno[15];
-				break;	
-			}
-		
+		PonerTerrenoEnMatriz(sensores.terreno, current_state, mapaResultado);
 	}
 
 	// Decidir la nueva accion
-	if ((sensores.terreno[2] == 'T' || sensores.terreno[2] =='S' || sensores.terreno[2] == 'G' || sensores.terreno[2]== 'A' || sensores.terreno[2] == 'K' ||
-		 sensores.terreno[2] == 'B' || sensores.terreno[2] == 'D'|| sensores.terreno[2] == 'X') && sensores.superficie[2]=='_'){
-		accion = actFORWARD;
-	}
-	else if(!girar_derecha){
-		accion = actTURN_SL;
-		girar_derecha = (rand()%2 == 0);
-	}
-	else{
-		accion = actTURN_SR;
-		girar_derecha = (rand()%2 == 0);
+	if(!prioridad_accion){
+		if ((sensores.terreno[2] == 'T' || sensores.terreno[2] =='S' || sensores.terreno[2] == 'G' ||
+	     	sensores.terreno[2] == 'X' || sensores.terreno[2] == 'D' || sensores.terreno[2] == 'K') && sensores.superficie[2]=='_'){
+				accion = actFORWARD;
+		}
+		else if(sensores.terreno[2] == 'A' && tieneBikini){
+				accion = actFORWARD;
+		}
+		else if(sensores.terreno[2] == 'B' && tieneZapatillas){
+			accion = actFORWARD;
+		}
+	/*else if(sensores.terreno[2] == 'M'){
+		if(!girar_derecha){
+			accion = actTURN_SL;
+			girar_derecha = (rand()%2 == 0);
+		}
+		else{
+			accion = actTURN_SR;
+			girar_derecha = (rand()%2 == 0);
+		}
+	}*/
+		else if(girar == 0){
+			accion = actTURN_SL;
+			girar = rand()%4;
+		}
+		else if(girar == 1){
+			accion = actTURN_SR;
+			girar = rand()%4;
+		}
+		else if(girar==2){
+			accion = actTURN_BL;
+			girar = rand()%4;
+		}
+		else if(girar==3){
+			accion = actTURN_BR;
+			girar = rand()%4;
+		}
 	}
 
 	// Determinar el efecto de la ultima accion enviada
@@ -273,3 +214,152 @@ int ComportamientoJugador::interact(Action accion, int valor){
   return false;
 }
 
+void ComportamientoJugador::PonerTerrenoEnMatriz(const vector<unsigned char> &terreno, const state &st, vector< vector< unsigned char> > &matriz){
+	matriz[st.fil][st.col] = terreno[0];
+			switch (st.brujula){
+			case norte:
+				matriz[st.fil-1][st.col-1]=terreno[1];
+				matriz[st.fil-1][st.col]=terreno[2];
+				matriz[st.fil-1][st.col+1]=terreno[3];
+				matriz[st.fil-2][st.col-2]=terreno[4];
+				matriz[st.fil-2][st.col-1]=terreno[5];
+				matriz[st.fil-2][st.col]=terreno[6];
+				matriz[st.fil-2][st.col+1]=terreno[7];
+				matriz[st.fil-2][st.col+2]=terreno[8];
+				matriz[st.fil-3][st.col-3]=terreno[9];
+				matriz[st.fil-3][st.col-2]=terreno[10];
+				matriz[st.fil-3][st.col-1]=terreno[11];
+				matriz[st.fil-3][st.col]=terreno[12];
+				matriz[st.fil-3][st.col+1]=terreno[13];
+				matriz[st.fil-3][st.col+2]=terreno[14];
+				matriz[st.fil-3][st.col+3]=terreno[15];
+				break;
+			case noreste:
+				matriz[st.fil-1][st.col]=terreno[1];
+				matriz[st.fil-1][st.col+1]=terreno[2];
+				matriz[st.fil][st.col+1]=terreno[3];
+				matriz[st.fil-2][st.col]=terreno[4];
+				matriz[st.fil-2][st.col+1]=terreno[5];
+				matriz[st.fil-2][st.col+2]=terreno[6];
+				matriz[st.fil-1][st.col+2]=terreno[7];
+				matriz[st.fil][st.col+2]=terreno[8];
+				matriz[st.fil-3][st.col]=terreno[9];
+				matriz[st.fil-3][st.col+1]=terreno[10];
+				matriz[st.fil-3][st.col+2]=terreno[11];
+				matriz[st.fil-3][st.col+3]=terreno[12];
+				matriz[st.fil-2][st.col+3]=terreno[13];
+				matriz[st.fil-1][st.col+3]=terreno[14];
+				matriz[st.fil][st.col+3]=terreno[15];
+				break;
+			case este:
+				matriz[st.fil-1][st.col+1]=terreno[1];
+				matriz[st.fil][st.col+1]=terreno[2];
+				matriz[st.fil+1][st.col+1]=terreno[3];
+				matriz[st.fil-2][st.col+2]=terreno[4];
+				matriz[st.fil-1][st.col+2]=terreno[5];
+				matriz[st.fil][st.col+2]=terreno[6];
+				matriz[st.fil+1][st.col+2]=terreno[7];
+				matriz[st.fil+2][st.col+2]=terreno[8];
+				matriz[st.fil-3][st.col+3]=terreno[9];
+				matriz[st.fil-2][st.col+3]=terreno[10];
+				matriz[st.fil-1][st.col+3]=terreno[11];
+				matriz[st.fil][st.col+3]=terreno[12];
+				matriz[st.fil+1][st.col+3]=terreno[13];
+				matriz[st.fil+2][st.col+3]=terreno[14];
+				matriz[st.fil+3][st.col+3]=terreno[15];
+				break;
+			case sureste:
+				matriz[st.fil][st.col+1]=terreno[1];
+				matriz[st.fil+1][st.col+1]=terreno[2];
+				matriz[st.fil+1][st.col]=terreno[3];
+				matriz[st.fil][st.col+2]=terreno[4];
+				matriz[st.fil+1][st.col+2]=terreno[5];
+				matriz[st.fil+2][st.col+2]=terreno[6];
+				matriz[st.fil+2][st.col+1]=terreno[7];
+				matriz[st.fil+2][st.col]=terreno[8];
+				matriz[st.fil][st.col+3]=terreno[9];
+				matriz[st.fil+1][st.col+3]=terreno[10];
+				matriz[st.fil+2][st.col+3]=terreno[11];
+				matriz[st.fil+3][st.col+3]=terreno[12];
+				matriz[st.fil+3][st.col+2]=terreno[13];
+				matriz[st.fil+3][st.col+1]=terreno[14];
+				matriz[st.fil+3][st.col]=terreno[15];
+				break;
+			case sur:
+				matriz[st.fil+1][st.col+1]=terreno[1];
+				matriz[st.fil+1][st.col]=terreno[2];
+				matriz[st.fil+1][st.col-1]=terreno[3];
+				matriz[st.fil+2][st.col+2]=terreno[4];
+				matriz[st.fil+2][st.col+1]=terreno[5];
+				matriz[st.fil+2][st.col]=terreno[6];
+				matriz[st.fil+2][st.col-1]=terreno[7];
+				matriz[st.fil+2][st.col-2]=terreno[8];
+				matriz[st.fil+3][st.col+3]=terreno[9];
+				matriz[st.fil+3][st.col+2]=terreno[10];
+				matriz[st.fil+3][st.col+1]=terreno[11];
+				matriz[st.fil+3][st.col]=terreno[12];
+				matriz[st.fil+3][st.col-1]=terreno[13];
+				matriz[st.fil+3][st.col-2]=terreno[14];
+				matriz[st.fil+3][st.col-3]=terreno[15];
+				break;
+			case suroeste:
+				matriz[st.fil+1][st.col]=terreno[1];
+				matriz[st.fil+1][st.col-1]=terreno[2];
+				matriz[st.fil][st.col-1]=terreno[3];
+				matriz[st.fil+2][st.col]=terreno[4];
+				matriz[st.fil+2][st.col-1]=terreno[5];
+				matriz[st.fil+2][st.col-2]=terreno[6];
+				matriz[st.fil+1][st.col-2]=terreno[7];
+				matriz[st.fil][st.col-2]=terreno[8];
+				matriz[st.fil+3][st.col]=terreno[9];
+				matriz[st.fil+3][st.col-1]=terreno[10];
+				matriz[st.fil+3][st.col-2]=terreno[11];
+				matriz[st.fil+3][st.col-3]=terreno[12];
+				matriz[st.fil+2][st.col-3]=terreno[13];
+				matriz[st.fil+1][st.col-3]=terreno[14];
+				matriz[st.fil][st.col-3]=terreno[15];
+				break;
+			case oeste:
+				matriz[st.fil+1][st.col-1]=terreno[1];
+				matriz[st.fil][st.col-1]=terreno[2];
+				matriz[st.fil-1][st.col-1]=terreno[3];
+				matriz[st.fil+2][st.col-2]=terreno[4];
+				matriz[st.fil+1][st.col-2]=terreno[5];
+				matriz[st.fil][st.col-2]=terreno[6];
+				matriz[st.fil-1][st.col-2]=terreno[7];
+				matriz[st.fil-2][st.col-2]=terreno[8];
+				matriz[st.fil+3][st.col-3]=terreno[9];
+				matriz[st.fil+2][st.col-3]=terreno[10];
+				matriz[st.fil+1][st.col-3]=terreno[11];
+				matriz[st.fil][st.col-3]=terreno[12];
+				matriz[st.fil-1][st.col-3]=terreno[13];
+				matriz[st.fil-2][st.col-3]=terreno[14];
+				matriz[st.fil-3][st.col-3]=terreno[15];
+				break;
+			case noroeste:
+				matriz[st.fil][st.col-1]=terreno[1];
+				matriz[st.fil-1][st.col-1]=terreno[2];
+				matriz[st.fil-1][st.col]=terreno[3];
+				matriz[st.fil][st.col-2]=terreno[4];
+				matriz[st.fil-1][st.col-2]=terreno[5];
+				matriz[st.fil-2][st.col-2]=terreno[6];
+				matriz[st.fil-2][st.col-1]=terreno[7];
+				matriz[st.fil-2][st.col]=terreno[8];
+				matriz[st.fil][st.col-3]=terreno[9];
+				matriz[st.fil-1][st.col-3]=terreno[10];
+				matriz[st.fil-2][st.col-3]=terreno[11];
+				matriz[st.fil-3][st.col-3]=terreno[12];
+				matriz[st.fil-3][st.col-2]=terreno[13];
+				matriz[st.fil-3][st.col-1]=terreno[14];
+				matriz[st.fil-3][st.col]=terreno[15];
+				break;	
+			}
+}
+
+void ComportamientoJugador::copiarMatriz(vector< vector< unsigned char> > &origen, vector< vector< unsigned char> > &destino){
+	for(int i=0; i<destino.size();i++){
+		for(int j=0; j<destino.size();j++){
+			destino[i][j] = origen[i][j];
+		}
+	}
+}
