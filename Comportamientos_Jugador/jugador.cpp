@@ -31,7 +31,7 @@ Action ComportamientoJugador::think(Sensores sensores){
     
       case actTURN_BL:
         a = current_state.brujula;
-		a = (a+13)%8;
+		a = (a+5)%8;
 		current_state.brujula = static_cast<Orientacion>(a);
       break;  
 
@@ -87,15 +87,6 @@ Action ComportamientoJugador::think(Sensores sensores){
 		cout << sensores.terreno[i];
 	cout << endl;
 
-	/*
-	cout << mapaCiego.size() << endl;
-	for(int i=0; i<mapaCiego.size(); i++){
-		for(int j=0; j<mapaCiego.size(); j++){
-			cout << mapaCiego[i][j] << " ";
-		}
-		cout << endl;
-	}*/
-
 	cout << "Superficie: ";
 	for (int i=0; i<sensores.superficie.size(); i++)
 		cout << sensores.superficie[i];
@@ -107,27 +98,37 @@ Action ComportamientoJugador::think(Sensores sensores){
 	cout << endl;
 
 //Mover a la casilla que me interesa
-if(!prioridad_accion){ //Si no he hecho anteriormente un movimiento con prioridad
-	for(int i=1; i<sensores.terreno.size() && !encontrada_casilla; i++){
-		if( sensores.terreno[i] == 'G' || sensores.terreno[i] == 'X' || sensores.terreno[i] == 'K' || sensores.terreno[i] == 'D'){
-			prioridad_accion =true;
-			if(i==1 || i ==4 || i==5 || i==9 || i==10 || i==11)
-				accion = actTURN_SL;
-			else if(i==2 || i ==6 || i==12)
-				accion = actFORWARD;
+	if(!prioridad_accion){ //Si no he hecho anteriormente un movimiento con prioridad
+		for(int i=1; i<sensores.terreno.size() && !encontrada_casilla; i++){
+			if( sensores.terreno[i] == 'G' || sensores.terreno[i] == 'X' || sensores.terreno[i] == 'K' || sensores.terreno[i] == 'D'){
+				prioridad_accion =true;
+				if(i==1 || i ==4 || i==5 || i==9 || i==10 || i==11){
+					accion = actTURN_SL;
+				}
+				else if(i==2 || i ==6 || i==12){ //Hace un movimiento sin hacer nada ?????
+					if((sensores.terreno[2] == 'B' && !tieneZapatillas) || (sensores.terreno[2] == 'A' && !tieneBikini)){
+						accion = hacer_giro();
+					}
+					else{
+						accion = actFORWARD;
+					}
+				}
+				else{
+					accion = actTURN_SR;
+				}
+				encontrada_casilla=true; 
+			}
 			else
-				accion = actTURN_SR;
-			encontrada_casilla=true;
-		}
-		else
-			prioridad_accion = false;
-	}	
-	encontrada_casilla=false;
-}else{
-	prioridad_accion=false;
-}
+				prioridad_accion = false;
+		}	
+		encontrada_casilla=false;
+	}else{
+		prioridad_accion=false;
+	}
 
 	if ( (sensores.terreno[0]=='G' and !bien_situado) || sensores.nivel == 0){ 
+		fil_ciega=current_state.fil; //Fila de la casilla de posicionamiento de la matriz ciega
+		col_ciega = current_state.col; //Columna de la casilla de posicionamiento de la matriz ciega
 		current_state.fil = sensores.posF;
 		current_state.col= sensores.posC;
 		current_state.brujula = sensores.sentido;
@@ -148,61 +149,70 @@ if(!prioridad_accion){ //Si no he hecho anteriormente un movimiento con priorida
 	}
 
 	if(sensores.terreno[0] == 'X'){
-		if(sensores.bateria<4600){
+		if(sensores.bateria<4000){
 			accion = actIDLE;
 			prioridad_accion=true;
 		}
-		if(sensores.bateria==4600)
+		if(sensores.bateria==4000)
 			prioridad_accion=false;
 	}
 
 	if(!bien_situado){
 		PonerTerrenoEnMatriz(sensores.terreno, current_state, mapaCiego);
+		//permiso_paso = true;
 	}
 
 	if(bien_situado){
 		PonerTerrenoEnMatriz(sensores.terreno, current_state, mapaResultado);
+		permiso_paso = ComprobarPermiso(sensores.terreno, current_state); //Comprobar si esta rodeado de agua o de bosque
 	}
+
+	if(((sensores.terreno[3] == 'M' && sensores.terreno[7] != 'M' && sensores.terreno[13] == 'M') || (sensores.terreno[1] == 'M' && sensores.terreno[5]!='M' && sensores.terreno[11] == 'M')) && sensores.terreno[2] !='M'){
+		prioridad_muro = true;
+	}
+
 
 	// Decidir la nueva accion
 	if(!prioridad_accion){
 		if ((sensores.terreno[2] == 'T' || sensores.terreno[2] =='S' || sensores.terreno[2] == 'G' ||
 	     	sensores.terreno[2] == 'X' || sensores.terreno[2] == 'D' || sensores.terreno[2] == 'K') && sensores.superficie[2]=='_'){
 				accion = actFORWARD;
+				permiso_paso = false;
 		}
-		else if(sensores.terreno[2] == 'A' && tieneBikini){
+		else if((sensores.terreno[2] == 'A' && tieneBikini) || (sensores.terreno[2] == 'A' && permiso_paso)){
 				accion = actFORWARD;
 		}
-		else if(sensores.terreno[2] == 'B' && tieneZapatillas){
+		else if((sensores.terreno[2] == 'B' && tieneZapatillas) || (sensores.terreno[2] == 'B' && permiso_paso)){
 			accion = actFORWARD;
 		}
-	/*else if(sensores.terreno[2] == 'M'){
-		if(!girar_derecha){
-			accion = actTURN_SL;
-			girar_derecha = (rand()%2 == 0);
+		else if(sensores.terreno[2] == 'M' && sensores.terreno[1] != 'M' && sensores.terreno[3] != 'M'){
+			if(rand()%2==0){
+				accion = actTURN_SL;
+			}
+			else{
+				accion = actTURN_SR;
+			}
 		}
 		else{
-			accion = actTURN_SR;
-			girar_derecha = (rand()%2 == 0);
-		}
-	}*/
-		else if(girar == 0){
-			accion = actTURN_SL;
 			girar = rand()%4;
-		}
-		else if(girar == 1){
-			accion = actTURN_SR;
-			girar = rand()%4;
-		}
-		else if(girar==2){
-			accion = actTURN_BL;
-			girar = rand()%4;
-		}
-		else if(girar==3){
-			accion = actTURN_BR;
-			girar = rand()%4;
+			accion = hacer_giro();
 		}
 	}
+
+	if(salir){ //Para que en el siguiete movimiento salga (apunte al hueco y en el siguiente movimiento vaya alli)
+		if(sensores.terreno[3] != 'M'){
+			accion = actTURN_SR;
+		}
+		else{
+			accion = actTURN_SL;
+		}
+		salir = false;
+		prioridad_muro = false;
+		
+	}
+
+	if(prioridad_muro)
+		salir = true;
 
 	// Determinar el efecto de la ultima accion enviada
 	last_action = accion;
@@ -357,9 +367,89 @@ void ComportamientoJugador::PonerTerrenoEnMatriz(const vector<unsigned char> &te
 }
 
 void ComportamientoJugador::copiarMatriz(vector< vector< unsigned char> > &origen, vector< vector< unsigned char> > &destino){
-	for(int i=0; i<destino.size();i++){
-		for(int j=0; j<destino.size();j++){
-			destino[i][j] = origen[i][j];
+	for(int i=0; i<destino.size(); i++){
+		for(int j=0; j< destino.size(); j++){
+			mapaResultado[i][j] = mapaCiego[i+(fil_ciega-current_state.fil)][j+(col_ciega-current_state.col)];
 		}
 	}
+}
+
+Action ComportamientoJugador::hacer_giro(){
+	Action aux;
+	switch (girar)
+	{
+	case 0:
+		aux = actTURN_SL;
+		break;
+	case 1:
+		aux = actTURN_SR;
+		break;
+	case 2:
+		aux = actTURN_BL;
+		break;
+	case 3:
+		aux = actTURN_BL;
+		break;
+	}
+	return aux;
+}
+
+bool ComportamientoJugador::ComprobarPermiso(const vector<unsigned char> &terreno,const state &st){
+	bool tiene_permiso=false;
+	vector<bool> asegurado(8,false);
+	switch (st.brujula)
+	{
+	case norte:
+		if(((terreno[1] =='B' && terreno[2] == 'B' && terreno[3] == 'B' ) || (terreno[1] =='A' && terreno[2] == 'A' && terreno[3] == 'A')) && !asegurado[0]){
+			contador_permiso++;
+			asegurado[0] = true;
+		}
+		break;
+	case noreste:
+		if(((terreno[1] =='B' && terreno[2] == 'B' && terreno[3] == 'B' ) || (terreno[1] =='A' && terreno[2] == 'A' && terreno[3] == 'A')) && !asegurado[1]){
+			contador_permiso++;
+			asegurado[1] = true;
+		}
+		break;
+	case este:
+		if(((terreno[1] =='B' && terreno[2] == 'B' && terreno[3] == 'B' ) || (terreno[1] =='A' && terreno[2] == 'A' && terreno[3] == 'A')) && !asegurado[2]){
+			contador_permiso++;
+			asegurado[2] = true;
+		}
+		break;
+	case sureste:
+		if(((terreno[1] =='B' && terreno[2] == 'B' && terreno[3] == 'B' ) || (terreno[1] =='A' && terreno[2] == 'A' && terreno[3] == 'A')) && !asegurado[3]){
+			contador_permiso++;
+			asegurado[3] = true;
+		}
+		break;
+	case sur:
+		if(((terreno[1] =='B' && terreno[2] == 'B' && terreno[3] == 'B' ) || (terreno[1] =='A' && terreno[2] == 'A' && terreno[3] == 'A')) && !asegurado[4]){
+			contador_permiso++;
+			asegurado[4] = true;
+		}
+		break;
+	case suroeste:
+		if(((terreno[1] =='B' && terreno[2] == 'B' && terreno[3] == 'B' ) || (terreno[1] =='A' && terreno[2] == 'A' && terreno[3] == 'A')) && !asegurado[5]){
+			contador_permiso++;
+			asegurado[5] = true;
+		}
+		break;
+	case oeste:
+		if(((terreno[1] =='B' && terreno[2] == 'B' && terreno[3] == 'B' ) || (terreno[1] =='A' && terreno[2] == 'A' && terreno[3] == 'A')) && !asegurado[6]){
+			contador_permiso++;
+			asegurado[6] = true;
+		}
+		break;
+	case noroeste:
+		if(((terreno[1] =='B' && terreno[2] == 'B' && terreno[3] == 'B' ) || (terreno[1] =='A' && terreno[2] == 'A' && terreno[3] == 'A')) && !asegurado[7]){
+			contador_permiso++;
+			asegurado[7] = true;
+		}
+		break;
+	}
+	if(contador_permiso == 8){
+		tiene_permiso = true;
+	}
+	return tiene_permiso;
 }
