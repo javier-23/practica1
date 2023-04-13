@@ -211,7 +211,7 @@ Action ComportamientoJugador::think(Sensores sensores){
 	//Para que vaya descubriendo mapa
 	if(!prioridad_accion && bien_situado && tieneBikini && tieneZapatillas){
 		//Action auxiliar;
-		if(!descubriendo && matrizPasos[current_state.fil][current_state.col]==3 && sensores.bateria>2800){//!no_pases){
+		if(!descubriendo && matrizPasos[current_state.fil][current_state.col]==3 && sensores.bateria>2800){
 			descubriendo = true;
 			accion = hacer_giro();
 		}
